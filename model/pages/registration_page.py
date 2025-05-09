@@ -1,8 +1,7 @@
 from selene import browser, be, have, command
-import os
 from model import resource
 from model.data.users import User
-from datetime import date
+
 
 class RegistrationPage:
     def __init__(self):
