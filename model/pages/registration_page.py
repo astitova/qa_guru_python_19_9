@@ -1,86 +1,128 @@
 from selene import browser, be, have, command
-
+import os
 from model import resource
+from model.data.users import User
+from datetime import date
 
 class RegistrationPage:
+    def __init__(self):
+        self.first_name = browser.element('#firstName')
+        self.last_name = browser.element('#lastName')
+        self.email = browser.element('#userEmail')
+        self.gender = browser.all('[name="gender"]')
+        self.mobile = browser.element('#userNumber')
+        self.date_of_birth = browser.element('#dateOfBirthInput')
+        self.subjects = browser.element('#subjectsInput')
+        self.hobbies = browser.all('.custom-checkbox')
+        self.picture = browser.element('#uploadPicture')
+        self.current_address = browser.element('#currentAddress')
+        self.state = browser.element('#state')
+        self.city = browser.element('#city')
+        self.submit_button = browser.element('#submit')
+
     def open(self):
         browser.open('/automation-practice-form')
         return self
 
     def fill_first_name(self, value):
-        browser.element('#firstName').should(be.visible).type('Luna')
+        self.first_name.should(be.blank).type(value)
         return self
 
+
     def fill_last_name(self, value):
-        browser.element('#lastName').should(be.visible).type('Lovegood')
+        self.last_name.should(be.blank).type(value)
         return self
 
     def fill_email(self, value):
-        browser.element('#userEmail').should(be.visible).type('luna_love@test.com')
+        self.email.should(be.blank).type(value)
         return self
 
-    def select_gender(self, gender):
-        browser.element('[for="gender-radio-2"]').should(be.clickable).click()
+    def fill_gender(self, value):
+        self.gender.element_by(have.value(value)).element('..').click()
         return self
 
-    def fill_mobile(self, value):
-        browser.element('#userNumber').should(be.visible).type('7924763817')
+    def fill_number(self, value):
+        self.mobile.should(be.blank).type(value)
         return self
 
-    def fill_date_of_birth(self, month, year, date):
-        browser.element('#dateOfBirthInput').click()
-        browser.element('.react-datepicker__month-select').click().element('[value="11"]').click()
-        browser.element('.react-datepicker__year-select').click().element('[value="1994"]').click()
-        browser.element('.react-datepicker__day--016').click()
+    def fill_date(self, date):
+        self.date_of_birth.click()
+        browser.element('.react-datepicker__month-select').click().element(f'[value="{date.month - 1}"]').click()
+        browser.element('.react-datepicker__year-select').click().element(f'[value="{date.year}"]').click()
+        browser.all('.react-datepicker__day').element_by(have.exact_text(str(date.day))).click()
         return self
 
-    def select_subject(self, value):
-        browser.element('#subjectsInput').perform(
-            command.js.scroll_into_view).should(be.visible).type('History').press_enter()
+    def fill_subjects(self, value):
+        self.subjects.should(be.blank).type(value).press_enter()
         return self
 
-    def select_hobbies(self, value):
-        browser.element('[for="hobbies-checkbox-3"]').should(be.clickable).click()
+    def fill_hobbies(self, value):
+        self.hobbies.element_by(have.exact_text(value)).click()
         return self
 
-    def select_picture(self, value):
-        browser.element('#uploadPicture').set_value(resource.path('image.png'))
+    def upload_img(self, filename):
+        self.picture.set_value(resource.path(filename))
         return self
 
     def fill_current_address(self, value):
-        browser.element('#currentAddress').should(be.visible).type('1234 Elm Street, Springfield, Illinois, 62704, USA')
+        self.current_address.should(be.blank).type(value)
         return self
 
-    def select_state(self, value):
-        browser.element('#react-select-3-input').set_value('NCR').press_enter()
+    def fill_state(self, value):
+        self.state.click()
+        browser.element('#react-select-3-input').set_value(value).press_tab()
         return self
 
-    def select_city(self, value):
-        browser.element('#react-select-4-input').set_value('Noida').press_enter()
+    def fill_city(self, value):
+        self.city.click()
+        browser.element('#react-select-4-input').set_value(value).press_enter()
         return self
 
-    def click_submit(self):
-        browser.element('#submit').should(be.clickable).click()
+    def submit(self):
+        self.submit_button.click()
         return self
 
-    def should_title_submitting_the_form(self, value):
-        browser.element('#example-modal-sizes-title-lg').should(have.exact_text('Thanks for submitting the form'))
+    def should_have_title(self, value):
+        browser.element('#example-modal-sizes-title-lg').should(
+            have.exact_text(value))
+        return self
 
-    def should_have_registered(self, student_name, email, gender, mobile, date_of_birth, subjects, hobbies, picture,
-                                    address, state_and_city):
-        browser.element('table').all('tr').should(have.exact_texts(
-            'Label Values',
-            'Student Name Luna Lovegood',
-            'Student Email luna_love@test.com',
-            'Gender Female',
-            'Mobile 7924763817',
-            'Date of Birth 16 December,1994',
-            'Subjects History',
-            'Hobbies Music',
-            'Picture image.png',
-            'Address 1234 Elm Street, Springfield, Illinois, 62704, USA',
-            'State and City NCR Noida')
+    def register(self, student: User):
+        return (self.fill_first_name(student.first_name)
+        .fill_last_name(student.last_name)
+        .fill_email(student.email)
+        .fill_gender(student.gender)
+        .fill_number(student.mobile)
+        .fill_date(student.date_of_birth)
+        .fill_subjects(student.subjects)
+        .fill_hobbies(student.hobbies)
+        .upload_img(student.picture)
+        .fill_current_address(student.current_address)
+        .fill_state(student.state)
+        .fill_city(student.city)
+        .submit())
+
+
+    def should_have_data(self, student: User):
+        full_date = student.date_of_birth.strftime('%d %B,%Y')
+
+        browser.element('.table').all('tr').should(
+            have.exact_texts(
+                'Label Values',
+                f'Student Name {student.first_name} {student.last_name}',
+                f'Student Email {student.email}',
+                f'Gender {student.gender}',
+                f'Mobile {student.mobile}',
+                f'Date of Birth {full_date}',
+                f'Subjects {student.subjects}',
+                f'Hobbies {student.hobbies}',
+                f'Picture {student.picture}',
+                f'Address {student.current_address}',
+                f'State and City {student.state} {student.city}'
+            )
         )
+        return self
+
 
 
 
