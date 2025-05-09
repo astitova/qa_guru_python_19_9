@@ -11,19 +11,3 @@ def test_registration_form(browser_options):
 
 
 
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
-    #
